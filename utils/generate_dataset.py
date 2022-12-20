@@ -1,11 +1,12 @@
 import trace
 import numpy as np
 import argparse
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import galsim
 import pickle
 import matplotlib.pyplot as plt
 import multiprocessing as mp
+import utils.tracing as td
 
 
 def update(*a):
@@ -15,28 +16,23 @@ def update(*a):
 class Arguments:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
-      
+
 def generate_dataset(it, args):
-    print('in here')
     np.random.seed(int(it*1000*np.random.random()))
     rng = galsim.BaseDeviate()
-    traced_photons, wavelengths = trace.tracePhotons(args.num_phot, rng, args.observation, args.wavelength, args.atmosphere, args.duration)
-    print('hehe')
-    PIXEL_SIZE = 10e-6
-    STAMP_SIZE = 10
-    SKY_LEVEL = 1000.0
-    image_array = trace.generateImage(traced_photons, wavelengths, STAMP_SIZE, PIXEL_SIZE, SKY_LEVEL)
+    image_array = td.simulateFOB(args.num_phot, rng, args.observation, args.wavelength, args.atmosphere, args.duration)
 
     plt.imsave(f'{args.folder}/FOB_{args.duration_label}_{args.num_phot}_{it + args.offset}.png', image_array)
     np.save(f'{args.folder}/FOB_{args.duration_label}_{args.num_phot}_{it + args.offset}.npy', image_array)
     np.savetxt(f'{args.folder}/FOB_{args.duration_label}_{args.num_phot}_{it + args.offset}.txt', image_array, delimiter=',')  
    
+   
 def generate_dataset_parallel(argums, pbar):
-    pool = mp.Pool(2)
+    pool = mp.Pool(1)
     
     pbar.reset(total=argums.num_simulations) 
     for it in range(argums.num_simulations):
-        print('there')
+        
         pool.apply_async(
             generate_dataset, 
             args = (it, argums), 
@@ -85,27 +81,28 @@ def main(duration, duration_label, num_phot, num_simulations, atm = 'full', offs
 
     if (atm == 'truncated'):
         # Load atmosphere phase screen list created from Elleboerk model.
-        with open("policy/truncated_atm.pkl", 'rb') as f:
+        with open("../policy/truncated_atm.pkl", 'rb') as f:
             atmosphere = pickle.load(f)
     else:
         # Load atmosphere phase screen list created from Elleboerk model.
-        with open("policy/full_atm.pkl", 'rb') as f:
+        with open("../policy/full_atm.pkl", 'rb') as f:
             atmosphere = pickle.load(f)
         
+    global pbar
     pbar = tqdm(total = num_simulations)
 
     # Generate dataset
     generate_dataset_parallel(
         Arguments(
-            atmosphere = atmosphere,
             duration = duration,
             duration_label = duration_label,
             num_simulations = num_simulations,
-            observation = observation, 
-            wavelength = wavelength,
             num_phot = int(num_phot),
-            offset = offset,
-            folder = 'data'
+            observation = observation,
+            atmosphere = atmosphere,
+            wavelength = wavelength,
+            folder = 'data/FOBs',
+            offset = offset
         ),
         pbar
     )
@@ -117,7 +114,8 @@ if __name__ == "__main__":
     # Add the arguments
     parser.add_argument('--atm',
                         metavar='atm',
-                        type=str)
+                        type=str, 
+                        default = 'full')
 
     parser.add_argument('--duration',
                         metavar='duration',
@@ -133,9 +131,11 @@ if __name__ == "__main__":
     parser.add_argument('--num_simulations',
                         metavar='num_simulations',
                         type=int) 
+
     parser.add_argument('--offset',
                         metavar='offset',
-                        type=int)                                                                      
+                        type=int, 
+                        default = 0)                                                                      
 
     # Execute the parse_args() method
     args = parser.parse_args()

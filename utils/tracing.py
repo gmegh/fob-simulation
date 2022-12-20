@@ -49,7 +49,6 @@ def tracePhotons(num_phot, rng, observation, wavelength, atm, duration):
     frb_photons = frb_total_psf.shoot(num_phot, rng)
     
     traced_photons, wavelengths = atmosphericTrace(frb_photons, rng, observation, wavelength, atm, first_kick = False)
-    print('hello3')
 
     return traced_photons, wavelengths
 
@@ -467,7 +466,7 @@ def generateImage(traced_photons, wavelengths, STAMP_SIZE, PIXEL_SIZE, noise):
     image : np.ndarray
         Sensor image.
     """
-    print('hello 2')
+
     # Convert rays to pixels for galsim sensor object. Put batoid results back into photons.
     photons = galsim.PhotonArray(len(wavelengths))
     photons.x = traced_photons.x/PIXEL_SIZE
@@ -499,11 +498,9 @@ def generateImage(traced_photons, wavelengths, STAMP_SIZE, PIXEL_SIZE, noise):
     
     return image.array
 
-def simulateFOB(num_phot, rng, observation, wavelength, atm, duration, STAMP_SIZE, PIXEL_SIZE, noise = False):
-    traced_photons, wavelengths = tracePhotons(num_phot, rng, observation, wavelength, atm, duration)
+def simulateFOB(num_phot, rng, observation, wavelength, atmosphere, duration, STAMP_SIZE = 10, PIXEL_SIZE = 10e-6, SKY_LEVEL = 1000.0):
+    traced_photons, wavelengths = tracePhotons(num_phot, rng, observation, wavelength, atmosphere, duration)
 
-    print('nanos')
-
-    image_array = generateImage(traced_photons, wavelengths, STAMP_SIZE, PIXEL_SIZE, noise)
+    image_array = generateImage(traced_photons, wavelengths, STAMP_SIZE, PIXEL_SIZE, SKY_LEVEL)
 
     return image_array

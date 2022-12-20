@@ -87,6 +87,8 @@ def main(folder = '/home/guillemmh/fob-simulation/policy/'):
         with galsim.utilities.pickle_shared():
             pickle.dump(full_atm, f)
 
+    return full_atm, truncated_atm
+
 def generate_atmosphere(atmSettings, wavelength, observation, rng):
     """
     Generate atmosphere model.
