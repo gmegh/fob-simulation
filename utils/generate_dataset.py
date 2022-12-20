@@ -6,7 +6,7 @@ import galsim
 import pickle
 import matplotlib.pyplot as plt
 import multiprocessing as mp
-import utils.tracing as td
+import tracing as td
 
 
 def update(*a):
@@ -28,7 +28,7 @@ def generate_dataset(it, args):
    
    
 def generate_dataset_parallel(argums, pbar):
-    pool = mp.Pool(1)
+    pool = mp.Pool(mp.cpu_count())
     
     pbar.reset(total=argums.num_simulations) 
     for it in range(argums.num_simulations):
@@ -81,11 +81,11 @@ def main(duration, duration_label, num_phot, num_simulations, atm = 'full', offs
 
     if (atm == 'truncated'):
         # Load atmosphere phase screen list created from Elleboerk model.
-        with open("../policy/truncated_atm.pkl", 'rb') as f:
+        with open("/home/guillemmh/fob-simulation/policy/truncated_atm.pkl", 'rb') as f:
             atmosphere = pickle.load(f)
     else:
         # Load atmosphere phase screen list created from Elleboerk model.
-        with open("../policy/full_atm.pkl", 'rb') as f:
+        with open("/home/guillemmh/fob-simulation/policy/full_atm.pkl", 'rb') as f:
             atmosphere = pickle.load(f)
         
     global pbar
